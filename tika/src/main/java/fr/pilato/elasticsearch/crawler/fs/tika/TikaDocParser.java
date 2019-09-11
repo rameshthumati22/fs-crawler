@@ -19,16 +19,9 @@
 
 package fr.pilato.elasticsearch.crawler.fs.tika;
 
-import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
-import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
-import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
-import org.apache.commons.io.input.TeeInputStream;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.tika.language.detect.LanguageResult;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.Property;
-import org.apache.tika.metadata.TikaCoreProperties;
+import static fr.pilato.elasticsearch.crawler.fs.framework.StreamsUtil.copy;
+import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.extractText;
+import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -41,14 +34,29 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static fr.pilato.elasticsearch.crawler.fs.framework.StreamsUtil.copy;
-import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.extractText;
-import static fr.pilato.elasticsearch.crawler.fs.tika.TikaInstance.langDetector;
+import org.apache.commons.io.input.TeeInputStream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tika.language.detect.LanguageResult;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Property;
+import org.apache.tika.metadata.TikaCoreProperties;
+
+import fr.pilato.elasticsearch.crawler.fs.beans.Doc;
+import fr.pilato.elasticsearch.crawler.fs.framework.FsCrawlerUtil;
+import fr.pilato.elasticsearch.crawler.fs.settings.Fs;
+import fr.pilato.elasticsearch.crawler.fs.settings.FsSettings;
+import fr.pilato.elasticsearch.crawler.fs.tika.customparser.CustomOCRFactory;
+import fr.pilato.elasticsearch.crawler.fs.tika.customparser.CustomOCRParser;
+import fr.pilato.elasticsearch.crawler.fs.tika.customparser.OCRResponseModel;
 
 /**
  * Parse a binary document and generate a FSCrawler Doc
  */
 public class TikaDocParser {
+	
+	private static CustomOCRParser customOCRParser;
+	
 
     private final static Logger logger = LogManager.getLogger(TikaDocParser.class);
 
@@ -87,12 +95,34 @@ public class TikaDocParser {
         }
 
         if (fsSettings.getFs().isIndexContent()) {
-            try {
-                // Set the maximum length of strings returned by the parseToString method, -1 sets no limit
-                logger.trace("Beginning Tika extraction");
-                parsedContent = extractText(fsSettings, indexedChars, inputStream, metadata);
-                logger.trace("End of Tika extraction");
-            } catch (Throwable e) {
+			try {
+				boolean useDefault = true;
+				// Set the maximum length of strings returned by the parseToString method, -1
+				// sets no limit
+				logger.trace("Beginning Tika extraction");
+
+				if (fsSettings.getFs().isCustomerOCREnabled()) {
+					if (!fsSettings.getFs().getCustomOCRSubscriptionKey().isEmpty() && fsSettings.getFs().getCustomOCRSubscriptionKey() != null) {
+
+						customOCRParser = CustomOCRFactory.getCustomOCR(fsSettings.getFs().getCustomOCRProviderName());
+
+						logger.debug("Custom OCR enabled, OCR Provider : " + fsSettings.getFs().getCustomOCRProviderName());
+						OCRResponseModel response = customOCRParser.extractText(inputStream,
+								fsSettings.getFs().getCustomOCRSubscriptionKey());
+
+						if (!response.isUseDefaultParser()) {
+							// On if Custom parser is capable of processing parsing request case - skip using default parser
+							useDefault = false;
+							parsedContent = response.getExtractedTextResponse();
+						}
+					}
+				}
+				if (useDefault) {
+					//proceed with default parser
+					parsedContent = extractText(fsSettings, indexedChars, inputStream, metadata);
+				}
+				logger.trace("End of Tika extraction");
+			} catch (Throwable e) {
                 // Build a message from embedded errors
                 Throwable current = e;
                 StringBuilder sb = new StringBuilder();

@@ -58,6 +58,9 @@ public class Fs {
     private Ocr ocr = new Ocr();
     private ByteSizeValue ignoreAbove = null;
     private boolean followSymlinks = false;
+    private boolean isCustomerOCREnabled = false;
+    private String customOCRProviderName = null;
+	private String customOCRSubscriptionKey = null;
 
     public static Builder builder() {
         return new Builder();
@@ -91,6 +94,9 @@ public class Fs {
         private Ocr ocr = new Ocr();
         private ByteSizeValue ignoreAbove = null;
         private boolean followSymlinks = false;
+        private boolean isCustomerOCREnabled = false;
+        private String customOCRProviderName = null;
+    	private String customOCRSubscriptionKey = null;
 
         public Builder setUrl(String url) {
             this.url = url;
@@ -245,11 +251,27 @@ public class Fs {
             this.followSymlinks = followSymlinks;
             return this;
         }
+        
+        public Builder setIsCustomerOCREnabled(boolean isCustomerOCREnabled) {
+            this.isCustomerOCREnabled = isCustomerOCREnabled;
+            return this;
+        } 
+        
+        public Builder setCustomOCRProviderName(String customOCRProviderName) {
+            this.customOCRProviderName = customOCRProviderName;
+            return this;
+        } 
+        
+        public Builder setCustomOCRSubscriptionKey(String customOCRSubscriptionKey) {
+            this.customOCRSubscriptionKey = customOCRSubscriptionKey;
+            return this;
+        } 
 
         public Fs build() {
             return new Fs(url, updateRate, includes, excludes, filters, jsonSupport, filenameAsId, addFilesize,
                     removeDeleted, addAsInnerObject, storeSource, indexedChars, indexContent, attributesSupport, rawMetadata,
-                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks);
+                    checksum, xmlSupport, indexFolders, langDetect, continueOnError, ocr, ignoreAbove, followSymlinks, isCustomerOCREnabled, 
+                    customOCRProviderName, customOCRSubscriptionKey);
         }
     }
 
@@ -260,7 +282,8 @@ public class Fs {
     private Fs(String url, TimeValue updateRate, List<String> includes, List<String> excludes, List<String> filters, boolean jsonSupport,
                boolean filenameAsId, boolean addFilesize, boolean removeDeleted, boolean addAsInnerObject, boolean storeSource,
                Percentage indexedChars, boolean indexContent, boolean attributesSupport, boolean rawMetadata, String checksum, boolean xmlSupport,
-               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove, boolean followSymlinks) {
+               boolean indexFolders, boolean langDetect, boolean continueOnError, Ocr ocr, ByteSizeValue ignoreAbove, boolean followSymlinks, boolean isCustomerOCREnabled, 
+               String customOCRProviderName, String customOCRSubscriptionKey) {
         this.url = url;
         this.updateRate = updateRate;
         this.includes = includes;
@@ -284,6 +307,9 @@ public class Fs {
         this.ocr = ocr;
         this.ignoreAbove = ignoreAbove;
         this.followSymlinks = followSymlinks;
+        this.isCustomerOCREnabled = isCustomerOCREnabled;
+        this.customOCRProviderName = customOCRProviderName;
+        this.customOCRSubscriptionKey = customOCRSubscriptionKey;
     }
 
     public String getUrl() {
@@ -445,8 +471,7 @@ public class Fs {
     public void setContinueOnError(boolean continueOnError) {
         this.continueOnError = continueOnError;
     }
-
-    @Deprecated
+	@Deprecated
     public void setPdfOcr(boolean pdfOcr) {
         String strategy;
         if (pdfOcr) {
@@ -486,7 +511,32 @@ public class Fs {
         this.followSymlinks = followSymlinks;
     }
 
-    @Override
+    
+    public boolean isCustomerOCREnabled() {
+		return isCustomerOCREnabled;
+	}
+
+	public void setCustomerOCREnabled(boolean isCustomerOCREnabled) {
+		this.isCustomerOCREnabled = isCustomerOCREnabled;
+	}
+
+	public String getCustomOCRProviderName() {
+		return customOCRProviderName;
+	}
+
+	public void setCustomOCRProviderName(String customOCRProviderName) {
+		this.customOCRProviderName = customOCRProviderName;
+	}
+
+	public String getCustomOCRSubscriptionKey() {
+		return customOCRSubscriptionKey;
+	}
+
+	public void setCustomOCRSubscriptionKey(String customOCRSubscriptionKey) {
+		this.customOCRSubscriptionKey = customOCRSubscriptionKey;
+	}
+
+	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

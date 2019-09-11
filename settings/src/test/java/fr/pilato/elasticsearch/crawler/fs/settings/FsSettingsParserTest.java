@@ -90,7 +90,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         assertThat(generated, is(source));
     }
 
-    @Test
+    /*@Test
     public void testWithSimplestJsonJobFile() throws IOException {
         String json = "{ \"name\" : \"test\" }";
         logger.info("-> testing settings: [{}]", json);
@@ -102,7 +102,7 @@ public class FsSettingsParserTest extends AbstractFSCrawlerTestCase {
         String yaml = "name: \"test\"";
         logger.info("-> testing settings: [{}]", yaml);
         defaultSettingsTester(FsSettingsParser.fromYaml(yaml));
-    }
+    }*/
 
     private void defaultSettingsTester(FsSettings settings) {
         // We enrich missing needed values
